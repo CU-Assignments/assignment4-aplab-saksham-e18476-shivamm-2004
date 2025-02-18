@@ -1,0 +1,68 @@
+#include <vector>
+#include <queue>
+#include <algorithm>
+#include <iostream>
+
+using namespace std;
+
+vector<vector<int>> getSkyline(vector<vector<int>>& buildings) {
+    // Step 1: Create events for each building's start and end
+    vector<vector<int>> events;
+    for (const auto& building : buildings) {
+        events.push_back({building[0], building[2], 1});  // Start event
+        events.push_back({building[1], building[2], -1}); // End event
+    }
+
+    // Step 2: Sort events
+    // Sort primarily by x coordinate; if x is the same, prioritize 'start' events and taller buildings first
+    sort(events.begin(), events.end(), [](const vector<int>& a, const vector<int>& b) {
+        if (a[0] == b[0]) {
+            return a[2] > b[2]; // prioritize start events first, taller buildings first
+        }
+        return a[0] < b[0]; // sort by x-coordinate
+    });
+
+    // Step 3: Sweep line with max-heap (priority queue)
+    vector<vector<int>> result;
+    priority_queue<int> max_heap;  // max-heap to track building heights
+    max_heap.push(0); // Initialize with height 0 for the ground level
+
+    int prev_max_height = 0;
+
+    for (const auto& event : events) {
+        int x = event[0];
+        int height = event[1];
+        int type = event[2];  // 1 for start, -1 for end
+
+        if (type == 1) {
+            // Start of a building, add its height to the heap
+            max_heap.push(height);
+        } else {
+            // End of a building, remove its height from the heap
+            // We can't remove directly, so we use a lazy removal approach
+            // We just don't need to do anything explicitly for removal here
+        }
+
+        // The current max height is the root of the max-heap
+        int current_max_height = max_heap.top();
+
+        // If the height changes, record the new key point
+        if (current_max_height != prev_max_height) {
+            result.push_back({x, current_max_height});
+            prev_max_height = current_max_height;
+        }
+    }
+
+    return result;
+}
+
+int main() {
+    vector<vector<int>> buildings = {{2,9,10},{3,7,15},{5,12,12},{15,20,10},{19,24,8}};
+    vector<vector<int>> skyline = getSkyline(buildings);
+
+    for (const auto& point : skyline) {
+        cout << "[" << point[0] << "," << point[1] << "] ";
+    }
+
+    return 0;
+}
